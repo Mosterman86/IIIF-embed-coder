@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wolfsonian IIIF Embed Builder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:     #000;
+      --fg:     #fff;
+      --muted:  #e0e0e0;
+      --dim:    #999;
+      --rule:   rgba(255,255,255,0.12);
+      --sans:   'Plus Jakarta Sans', sans-serif;
+      --mono:   'DM Mono', monospace;
+      --gap:    clamp(1.5rem, 5vw, 4rem);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--sans);
+      font-weight: 300;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Header ── */
+    .site-header {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(0,0,0,0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--rule);
+      padding: 0;
+    }
+    .header-inner {
+      max-width: 1200px; margin: 0 auto;
+      padding: 0.8rem var(--gap);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .header-name {
+      font-family: var(--mono); font-size: 0.62rem;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--fg); text-decoration: none;
+    }
+    .header-name:hover { color: var(--muted); }
+
+    /* ── Hero ── */
+    .hero {
+      padding: clamp(3rem,7vh,6rem) var(--gap) clamp(2rem,4vh,3.5rem);
+      max-width: 1200px; margin: 0 auto;
+      border-bottom: 1px solid var(--rule);
+    }
+    .hero-eyebrow {
+      font-family: var(--mono); font-size: 0.62rem;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 1.25rem;
+      display: flex; align-items: center; gap: 0.75rem;
+    }
+    .hero-eyebrow::before {
+      content: ''; display: block; width: 28px; height: 1px;
+      background: var(--muted);
+    }
+    .hero-sub-eyebrow {
+      font-family: var(--mono); font-size: 0.58rem;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--dim); margin-bottom: 2rem;
+      padding-left: calc(28px + 0.75rem);
+    }
+    .hero-title {
+      font-size: clamp(2.2rem, 6vw, 4rem);
+      font-weight: 200; letter-spacing: -0.02em;
+      line-height: 1.05; margin-bottom: 2.5rem;
+    }
+    .hero-desc {
+      font-size: 0.88rem; font-weight: 300;
+      color: var(--muted); line-height: 1.8;
+      max-width: 640px;
+    }
+
+    /* ── Body ── */
+    .body-wrap {
+      max-width: 1200px; margin: 0 auto;
+      padding: 0 var(--gap);
+    }
+
+    /* ── Form section ── */
+    .form-section {
+      padding: clamp(2rem,4vh,3rem) 0;
+      border-bottom: 1px solid var(--rule);
+    }
+    .form-section + .form-section {
+      border-top: none;
+    }
+
+    .field-label {
+      font-family: var(--mono); font-size: 0.55rem;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--dim); margin-bottom: 0.65rem;
+      display: block;
+    }
+
+    input[type="url"],
+    select,
+    textarea {
+      width: 100%;
+      background: transparent;
+      color: var(--fg);
+      border: none;
+      border-bottom: 1px solid var(--rule);
+      padding: 0.6rem 0;
+      font-family: var(--sans);
+      font-size: 0.92rem;
+      font-weight: 300;
+      outline: none;
+      transition: border-color 0.2s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    input[type="url"]::placeholder { color: var(--dim); }
+    input[type="url"]:focus,
+    select:focus,
+    textarea:focus { border-bottom-color: var(--muted); }
+    input[type="url"]:hover,
+    select:hover { border-bottom-color: var(--dim); }
+
+    select {
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23444'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.25rem center;
+      padding-right: 1.5rem;
+    }
+    select option { background: #111; color: var(--fg); }
+
+    textarea {
+      min-height: 220px;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      line-height: 1.6;
+      resize: vertical;
+      border: 1px solid var(--rule);
+      padding: 1rem;
+      margin-top: 0.5rem;
+      background: rgba(255,255,255,0.03);
+    }
+    textarea:focus { border-color: var(--muted); }
+
+    .field-group { margin-bottom: 2rem; }
+    .field-group:last-child { margin-bottom: 0; }
+
+    /* ── Two-col layout for inputs ── */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2.5rem;
+    }
+
+    /* ── Buttons ── */
+    .btn-row {
+      display: flex; gap: 0.75rem; align-items: center;
+      flex-wrap: wrap; margin-top: 2rem;
+    }
+
+    .btn-primary {
+      font-family: var(--mono); font-size: 0.58rem;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      background: var(--fg); color: var(--bg);
+      border: 1px solid var(--fg); padding: 0.55em 1.4em;
+      border-radius: 3px; cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-primary:hover { opacity: 0.85; }
+
+    .btn-secondary {
+      font-family: var(--mono); font-size: 0.58rem;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      background: transparent; color: var(--muted);
+      border: 1px solid var(--rule); padding: 0.55em 1.4em;
+      border-radius: 3px; cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .btn-secondary:hover { color: var(--fg); border-color: var(--muted); }
+
+    .status-text {
+      margin-left: auto;
+      font-family: var(--mono); font-size: 0.6rem;
+      letter-spacing: 0.1em; color: var(--dim);
+    }
+    .status-text.ok { color: #3ddc97; }
+    .status-text.bad { color: #ff5a7a; }
+
+    /* ── Meta block ── */
+    .meta-block {
+      margin-top: 1.75rem;
+      padding: 1rem 1.25rem;
+      border: 1px solid var(--rule);
+      background: rgba(255,255,255,0.02);
+    }
+    .meta-row {
+      display: flex; gap: 1rem; align-items: baseline;
+      flex-wrap: wrap; margin-bottom: 0.4rem;
+    }
+    .meta-row:last-child { margin-bottom: 0; }
+    .meta-label {
+      font-family: var(--mono); font-size: 0.55rem;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--dim); white-space: nowrap;
+    }
+    .meta-value {
+      font-size: 0.85rem; font-weight: 300; color: var(--fg);
+    }
+    .meta-link a {
+      font-family: var(--mono); font-size: 0.6rem;
+      color: var(--muted); text-decoration: underline;
+      letter-spacing: 0.06em;
+    }
+    .meta-link a:hover { color: var(--fg); }
+
+    /* ── Hint text ── */
+    .hint {
+      font-size: 0.82rem; color: var(--muted);
+      line-height: 1.8; margin-top: 1rem;
+    }
+    .hint strong { color: var(--fg); font-weight: 400; }
+
+    /* ── Footer ── */
+    .site-footer {
+      border-top: 1px solid var(--rule);
+      padding: clamp(2rem,4vh,3rem) var(--gap);
+      max-width: 1200px; margin: 0 auto;
+    }
+    .ft-body {
+      font-size: 0.82rem; color: var(--muted); line-height: 1.8;
+    }
+    .ft-body a { color: var(--muted); text-decoration: underline; }
+    .ft-body a:hover { color: var(--fg); }
+
+    /* ── Manifest validation indicator ── */
+    .manifest-wrap { position: relative; }
+    .validation-row {
+      display: flex; align-items: center; gap: 0.5rem;
+      margin-top: 0.55rem; min-height: 1.2rem;
+    }
+    .validation-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      flex-shrink: 0; background: var(--dim);
+      transition: background 0.2s;
+    }
+    .validation-dot.checking { background: #f0c040; animation: pulse 1s infinite; }
+    .validation-dot.valid    { background: #3ddc97; animation: none; }
+    .validation-dot.invalid  { background: #ff5a7a; animation: none; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+    .validation-msg {
+      font-family: var(--mono); font-size: 0.55rem;
+      letter-spacing: 0.08em; color: var(--dim);
+      transition: color 0.2s;
+    }
+    .validation-msg.checking { color: #f0c040; }
+    .validation-msg.valid    { color: #3ddc97; }
+    .validation-msg.invalid  { color: #ff5a7a; }
+
+    /* ── Object title preview ── */
+    .object-preview {
+      margin-top: 0.9rem;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--rule);
+      background: rgba(255,255,255,0.02);
+      display: none;
+    }
+    .object-preview-label {
+      font-family: var(--mono); font-size: 0.5rem;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--dim); margin-bottom: 0.3rem;
+    }
+    .object-preview-title {
+      font-size: 0.85rem; font-weight: 300; color: var(--fg);
+    }
+    .object-preview-link {
+      display: block; margin-top: 0.3rem;
+      font-family: var(--mono); font-size: 0.55rem;
+      color: var(--muted); text-decoration: underline;
+      letter-spacing: 0.06em;
+    }
+    .object-preview-link:hover { color: var(--fg); }
+
+    /* ── Copy toast ── */
+    .copy-toast {
+      position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(8px);
+      background: var(--fg); color: var(--bg);
+      font-family: var(--mono); font-size: 0.6rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 0.6em 1.4em; border-radius: 3px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      white-space: nowrap; z-index: 999;
+    }
+    .copy-toast.visible {
+      opacity: 1; transform: translateX(-50%) translateY(0);
+    }
+    @media (max-width: 700px) {
+      .two-col { grid-template-columns: 1fr; gap: 1.5rem; }
+    }
+    @media (max-width: 540px) {
+      .header-inner { padding: 0.65rem 1rem; }
+      .body-wrap { padding: 0 1rem; }
+      .hero { padding: 2.5rem 1rem 2rem; }
+      .site-footer { padding: 2rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header class="site-header">
+  <div class="header-inner">
+    <a class="header-name" href="https://www.wolfsonian.org" target="_blank">The Wolfsonian&ndash;FIU</a>
+  </div>
+</header>
+
+<!-- ── Hero ── -->
+<div class="hero">
+  <div class="hero-eyebrow">Wolfsonian Digital Labs &mdash; IIIF Tools</div>
+  <div class="hero-sub-eyebrow">Proof of Concept</div>
+  <h1 class="hero-title">IIIF Embed <span style="font-size:0.55em;letter-spacing:-0.01em;">&mdash; Snippet Builder</span></h1>
+  <p class="hero-desc">Generate copy-paste embed code from any IIIF Manifest URL. IIIF lets high-resolution collection images be reused across platforms while staying connected to the museum&rsquo;s digital catalogue.</p>
+</div>
+
+<!-- ── Form ── -->
+<div class="body-wrap">
+  <div class="form-section">
+    <div class="two-col">
+      <div>
+        <div class="field-group">
+          <label class="field-label" for="manifest">IIIF Manifest URL</label>
+          <div class="manifest-wrap">
+            <input id="manifest" type="url" placeholder="https://digital.wolfsonian.org/node/5122/manifest" autocomplete="off" />
+            <div class="validation-row">
+              <div class="validation-dot" id="valDot"></div>
+              <span class="validation-msg" id="valMsg"></span>
+            </div>
+            <div class="object-preview" id="objectPreview">
+              <div class="object-preview-label">Object</div>
+              <div class="object-preview-title" id="previewTitle"></div>
+              <a class="object-preview-link" id="previewLink" href="#" target="_blank" rel="noopener"></a>
+            </div>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="viewer">Viewer</label>
+          <select id="viewer">
+            <option value="clover">Clover IIIF (web component)</option>
+            <option value="uv">Universal Viewer (iframe)</option>
+            <option value="mirador">Mirador (script embed)</option>
+          </select>
+        </div>
+        <div class="btn-row">
+          <button class="btn-primary" id="generate" type="button">Generate Snippet</button>
+          <button class="btn-secondary" id="copy" type="button">Copy</button>
+          <button class="btn-secondary" id="clear" type="button">Clear</button>
+          <div class="status-text" id="status">Ready</div>
+        </div>
+      </div>
+
+      <div>
+        <p class="hint" style="margin-top:0;">
+          <strong>Where can I paste this?</strong> CMS HTML blocks, blog or exhibition pages, internal documentation, or any HTML field that allows iframes or scripts.
+        </p>
+        <p class="hint">
+          Built CSP-safe: no inline JavaScript or onclick handlers. Images are served directly from the Wolfsonian digital catalogue via the IIIF Presentation API.
+        </p>
+      </div>
+    </div>
+
+    <!-- Meta block — shown after generate -->
+    <div class="meta-block" id="metaBlock" style="display:none;">
+      <div class="meta-row">
+        <span class="meta-label">Object</span>
+        <span class="meta-value" id="objectTitle">&mdash;</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Source</span>
+        <span class="meta-value" id="manifestEcho">&mdash;</span>
+        <span class="meta-link" id="catalogueLinkWrap" style="display:none;">
+          &middot; <a id="catalogueLink" href="#" target="_blank" rel="noopener">View in digital catalogue &rarr;</a>
+        </span>
+      </div>
+      <div class="hint" id="metaHint" style="margin-top:0.75rem;"></div>
+    </div>
+  </div>
+
+  <!-- Output -->
+  <div class="form-section">
+    <label class="field-label" for="output">Generated Embed Snippet</label>
+    <textarea id="output" spellcheck="false" aria-label="Generated embed snippet"></textarea>
+  </div>
+</div>
+
+<!-- ── Footer ── -->
+<footer>
+  <div class="site-footer">
+    <p class="ft-body">
+      Part of the <a href="https://www.wolfsonian.org" target="_blank">Wolfsonian&ndash;FIU</a> digital labs initiative.
+      Built on <a href="https://iiif.io" target="_blank">IIIF</a> open standards.
+    </p>
+  </div>
+</footer>
+
+<!-- ── Copy toast ── -->
+<div class="copy-toast" id="copyToast">Snippet copied to clipboard</div>
+
+<script>
+(function () {
+
+  /* ── Snippet templates ── */
+  function generateSnippet(viewer, manifestUrl) {
+    switch (viewer) {
+      case 'clover':
+        return [
+          '<!-- Clover IIIF viewer (web component) -->',
+          '<script src="https://www.unpkg.com/@samvera/clover-iiif@latest/dist/web-components/index.umd.js"><\/script>',
+          '<clover-viewer id="' + manifestUrl + '"></clover-viewer>'
+        ].join('\n');
+
+      case 'uv':
+        return [
+          '<!-- Universal Viewer (iframe embed) -->',
+          '<iframe',
+          '  src="https://uv-v4.netlify.app/uv.html#?manifest=' + encodeURIComponent(manifestUrl) + '"',
+          '  width="800"',
+          '  height="600"',
+          '  allowfullscreen',
+          '  frameborder="0"',
+          '  title="IIIF Viewer">',
+          '</iframe>'
+        ].join('\n');
+
+      case 'mirador':
+        return [
+          '<!-- Mirador 3 viewer (script embed) -->',
+          '<div id="mirador-viewer" style="width:100%;height:600px;"></div>',
+          '<script src="https://cdn.jsdelivr.net/npm/mirador@3/dist/mirador.min.js"><\/script>',
+          '<script>',
+          '  Mirador.viewer({',
+          '    id: "mirador-viewer",',
+          '    manifests: { "' + manifestUrl + '": {} },',
+          '    windows: [{ manifestId: "' + manifestUrl + '" }]',
+          '  });',
+          '<\/script>'
+        ].join('\n');
+
+      default:
+        return '';
+    }
+  }
+
+  /* ── Manifest validation ── */
+  var manifestInput = document.getElementById('manifest');
+  var valDot        = document.getElementById('valDot');
+  var valMsg        = document.getElementById('valMsg');
+  var objectPreview = document.getElementById('objectPreview');
+  var previewTitle  = document.getElementById('previewTitle');
+  var previewLink   = document.getElementById('previewLink');
+  var lastValidated = '';
+  var debounceTimer;
+
+  function setValidationState(state, msg) {
+    valDot.className = 'validation-dot ' + state;
+    valMsg.className = 'validation-msg ' + state;
+    valMsg.textContent = msg;
+  }
+
+  function extractLabel(manifest) {
+    var label = manifest.label;
+    if (!label) return '';
+    if (typeof label === 'string') return label;
+    if (Array.isArray(label)) return label[0] || '';
+    if (typeof label === 'object') {
+      var keys = Object.keys(label);
+      var first = label[keys[0]];
+      if (Array.isArray(first)) return first[0] || '';
+      return String(first);
+    }
+    return '';
+  }
+
+  function validateManifest(url, callback) {
+    if (!url || !url.startsWith('http')) {
+      setValidationState('', '');
+      objectPreview.style.display = 'none';
+      return;
+    }
+    if (url === lastValidated) { if (callback) callback(); return; }
+    lastValidated = url;
+    setValidationState('checking', 'Checking manifest\u2026');
+    objectPreview.style.display = 'none';
+
+    fetch(url)
+      .then(function(res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function(data) {
+        var context = data['@context'] || '';
+        var isIIIF = (typeof context === 'string' && context.indexOf('iiif.io') !== -1) ||
+                     (Array.isArray(context) && context.some(function(c) {
+                       return typeof c === 'string' && c.indexOf('iiif.io') !== -1;
+                     }));
+        if (!isIIIF) throw new Error('Not a IIIF manifest');
+
+        var title = extractLabel(data);
+        setValidationState('valid', 'Valid IIIF manifest');
+
+        if (title) {
+          previewTitle.textContent = title;
+          var recordUrl = url.replace(/\/manifest\/?$/, '');
+          previewLink.href = recordUrl;
+          previewLink.textContent = 'View in digital catalogue \u2192';
+          objectPreview.style.display = 'block';
+        }
+
+        if (callback) callback();
+      })
+      .catch(function() {
+        setValidationState('invalid', 'Could not verify \u2014 check the URL and try again');
+        objectPreview.style.display = 'none';
+        setStatus('Invalid manifest URL', 'bad');
+      });
+  }
+
+  manifestInput.addEventListener('blur', function() {
+    validateManifest(this.value.trim(), null);
+  });
+
+  manifestInput.addEventListener('input', function() {
+    setValidationState('', '');
+    objectPreview.style.display = 'none';
+    lastValidated = '';
+    clearTimeout(debounceTimer);
+    var val = this.value.trim();
+    if (val.length > 20) {
+      debounceTimer = setTimeout(function() { validateManifest(val, null); }, 900);
+    }
+  });
+
+  /* ── Status helper ── */
+  var statusEl = document.getElementById('status');
+  function setStatus(msg, cls) {
+    statusEl.textContent = msg;
+    statusEl.className = 'status-text' + (cls ? ' ' + cls : '');
+  }
+
+  /* ── Generate ── */
+  var generateBtn = document.getElementById('generate');
+  var outputEl    = document.getElementById('output');
+  var viewerSel   = document.getElementById('viewer');
+
+  generateBtn.addEventListener('click', function() {
+    var url = manifestInput.value.trim();
+    if (!url) {
+      setStatus('Enter a manifest URL first', 'bad');
+      manifestInput.focus();
+      return;
+    }
+    setStatus('Generating\u2026', '');
+
+    function doGenerate() {
+      var snippet = generateSnippet(viewerSel.value, url);
+      outputEl.value = snippet;
+      setStatus('Snippet ready', 'ok');
+      outputEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // If not yet validated, validate first then generate
+    if (lastValidated !== url) {
+      validateManifest(url, doGenerate);
+    } else {
+      doGenerate();
+    }
+  });
+
+  /* ── Clear ── */
+  var clearBtn = document.getElementById('clear');
+  clearBtn.addEventListener('click', function() {
+    manifestInput.value = '';
+    outputEl.value = '';
+    setValidationState('', '');
+    objectPreview.style.display = 'none';
+    lastValidated = '';
+    setStatus('Ready', '');
+    manifestInput.focus();
+  });
+
+  /* ── Copy with toast ── */
+  var copyBtn   = document.getElementById('copy');
+  var copyToast = document.getElementById('copyToast');
+
+  function showCopyToast() {
+    copyToast.classList.add('visible');
+    setTimeout(function() { copyToast.classList.remove('visible'); }, 2200);
+  }
+
+  copyBtn.addEventListener('click', function() {
+    if (!outputEl.value.trim()) {
+      setStatus('Nothing to copy — generate a snippet first', 'bad');
+      return;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(outputEl.value).then(showCopyToast);
+    } else {
+      outputEl.select();
+      document.execCommand('copy');
+      showCopyToast();
+    }
+    setStatus('Copied', 'ok');
+  });
+
+})();
+</script>
+</body>
+</html>
